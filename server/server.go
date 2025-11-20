@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sort"
 	"sync"
+	"time"
 
 	auctionsystem "github.com/Mojjedrengen/AuctionSystem/grpc"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -98,5 +99,24 @@ func (s *AuctionServer) Result(ctw context.Context, in *emptypb.Empty) (*auction
 			Highestbidder: s.highestBidder,
 			State:         s.state,
 		}, nil
+	}
+}
+
+func (s *AuctionServer) bidManager() {
+	for {
+		s.mu.Lock()
+		switch s.state {
+		case auctionsystem.State_DONE:
+			s.highestBidder = nil
+			s.highestBid = 0
+			s.bidStartTime = uint64(time.Now().Unix())
+			s.state = auctionsystem.State_ONGOING
+		case auctionsystem.State_ONGOING:
+			if s.bidStartTime-uint64(time.Now().Unix())+uint64(s.bidTimeframe) <= 0 {
+				s.lastWonBidder = s.highestBidder
+				s.state = auctionsystem.State_DONE
+			}
+		}
+		s.mu.Unlock()
 	}
 }
