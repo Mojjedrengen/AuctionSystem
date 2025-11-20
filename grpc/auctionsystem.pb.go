@@ -9,6 +9,7 @@ package auctionsystem
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -25,21 +26,18 @@ type State int32
 
 const (
 	State_ONGOING State = 0
-	State_LOST    State = 1
-	State_WON     State = 2
+	State_DONE    State = 1
 )
 
 // Enum value maps for State.
 var (
 	State_name = map[int32]string{
 		0: "ONGOING",
-		1: "LOST",
-		2: "WON",
+		1: "DONE",
 	}
 	State_value = map[string]int32{
 		"ONGOING": 0,
-		"LOST":    1,
-		"WON":     2,
+		"DONE":    1,
 	}
 )
 
@@ -217,7 +215,7 @@ func (x *UUID) GetValue() string {
 
 type Resultmsg struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Highestbidder *UUID                  `protobuf:"bytes,1,opt,name=highestbidder,proto3,oneof" json:"highestbidder,omitempty"`
+	Highestbidder *UUID                  `protobuf:"bytes,1,opt,name=highestbidder,proto3" json:"highestbidder,omitempty"`
 	State         State                  `protobuf:"varint,2,opt,name=state,proto3,enum=auctionsystem.State" json:"state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -323,32 +321,30 @@ var File_grpc_auctionsystem_proto protoreflect.FileDescriptor
 
 const file_grpc_auctionsystem_proto_rawDesc = "" +
 	"\n" +
-	"\x18grpc/auctionsystem.proto\x12\rauctionsystem\"E\n" +
+	"\x18grpc/auctionsystem.proto\x12\rauctionsystem\x1a\x1bgoogle/protobuf/empty.proto\"E\n" +
 	"\x06amount\x12\x16\n" +
 	"\x06amount\x18\x01 \x01(\x04R\x06amount\x12#\n" +
 	"\x02id\x18\x02 \x01(\v2\x13.auctionsystem.UUIDR\x02id\"\x1c\n" +
 	"\x04UUID\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\tR\x05value\"\x89\x01\n" +
-	"\tresultmsg\x12>\n" +
-	"\rhighestbidder\x18\x01 \x01(\v2\x13.auctionsystem.UUIDH\x00R\rhighestbidder\x88\x01\x01\x12*\n" +
-	"\x05state\x18\x02 \x01(\x0e2\x14.auctionsystem.stateR\x05stateB\x10\n" +
-	"\x0e_highestbidder\"_\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value\"r\n" +
+	"\tresultmsg\x129\n" +
+	"\rhighestbidder\x18\x01 \x01(\v2\x13.auctionsystem.UUIDR\rhighestbidder\x12*\n" +
+	"\x05state\x18\x02 \x01(\x0e2\x14.auctionsystem.stateR\x05state\"_\n" +
 	"\x06ackmsg\x12$\n" +
 	"\x03ack\x18\x01 \x01(\x0e2\x12.auctionsystem.ackR\x03ack\x12!\n" +
 	"\texception\x18\x02 \x01(\tH\x00R\texception\x88\x01\x01B\f\n" +
 	"\n" +
-	"_exception*'\n" +
+	"_exception*\x1e\n" +
 	"\x05state\x12\v\n" +
 	"\aONGOING\x10\x00\x12\b\n" +
-	"\x04LOST\x10\x01\x12\a\n" +
-	"\x03WON\x10\x02*+\n" +
+	"\x04DONE\x10\x01*+\n" +
 	"\x03ack\x12\b\n" +
 	"\x04FAIL\x10\x00\x12\v\n" +
 	"\aSUCCESS\x10\x01\x12\r\n" +
-	"\tEXCEPTION\x10\x022{\n" +
+	"\tEXCEPTION\x10\x022~\n" +
 	"\aAuction\x125\n" +
-	"\x03Bid\x12\x15.auctionsystem.amount\x1a\x15.auctionsystem.ackmsg\"\x00\x129\n" +
-	"\x06Result\x12\x13.auctionsystem.UUID\x1a\x18.auctionsystem.resultmsg\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
+	"\x03Bid\x12\x15.auctionsystem.amount\x1a\x15.auctionsystem.ackmsg\"\x00\x12<\n" +
+	"\x06Result\x12\x16.google.protobuf.Empty\x1a\x18.auctionsystem.resultmsg\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
 
 var (
 	file_grpc_auctionsystem_proto_rawDescOnce sync.Once
@@ -365,12 +361,13 @@ func file_grpc_auctionsystem_proto_rawDescGZIP() []byte {
 var file_grpc_auctionsystem_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_grpc_auctionsystem_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_grpc_auctionsystem_proto_goTypes = []any{
-	(State)(0),        // 0: auctionsystem.state
-	(Ack)(0),          // 1: auctionsystem.ack
-	(*Amount)(nil),    // 2: auctionsystem.amount
-	(*UUID)(nil),      // 3: auctionsystem.UUID
-	(*Resultmsg)(nil), // 4: auctionsystem.resultmsg
-	(*Ackmsg)(nil),    // 5: auctionsystem.ackmsg
+	(State)(0),            // 0: auctionsystem.state
+	(Ack)(0),              // 1: auctionsystem.ack
+	(*Amount)(nil),        // 2: auctionsystem.amount
+	(*UUID)(nil),          // 3: auctionsystem.UUID
+	(*Resultmsg)(nil),     // 4: auctionsystem.resultmsg
+	(*Ackmsg)(nil),        // 5: auctionsystem.ackmsg
+	(*emptypb.Empty)(nil), // 6: google.protobuf.Empty
 }
 var file_grpc_auctionsystem_proto_depIdxs = []int32{
 	3, // 0: auctionsystem.amount.id:type_name -> auctionsystem.UUID
@@ -378,7 +375,7 @@ var file_grpc_auctionsystem_proto_depIdxs = []int32{
 	0, // 2: auctionsystem.resultmsg.state:type_name -> auctionsystem.state
 	1, // 3: auctionsystem.ackmsg.ack:type_name -> auctionsystem.ack
 	2, // 4: auctionsystem.Auction.Bid:input_type -> auctionsystem.amount
-	3, // 5: auctionsystem.Auction.Result:input_type -> auctionsystem.UUID
+	6, // 5: auctionsystem.Auction.Result:input_type -> google.protobuf.Empty
 	5, // 6: auctionsystem.Auction.Bid:output_type -> auctionsystem.ackmsg
 	4, // 7: auctionsystem.Auction.Result:output_type -> auctionsystem.resultmsg
 	6, // [6:8] is the sub-list for method output_type
@@ -393,7 +390,6 @@ func file_grpc_auctionsystem_proto_init() {
 	if File_grpc_auctionsystem_proto != nil {
 		return
 	}
-	file_grpc_auctionsystem_proto_msgTypes[2].OneofWrappers = []any{}
 	file_grpc_auctionsystem_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
 option go_package = "github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystem";
 
 package auctionsystem;
@@ -7,7 +8,7 @@ package auctionsystem;
 // NOTE cannot have a void input in gRPC as far as i know
 service Auction {
   rpc Bid(amount) returns (ackmsg) {}
-  rpc Result(UUID) returns (resultmsg) {}
+  rpc Result(google.protobuf.Empty) returns (resultmsg) {}
 }
 
 message amount {
@@ -18,14 +19,13 @@ message amount {
 message UUID { string value = 1; }
 
 message resultmsg {
-  optional UUID highestbidder = 1;
+  UUID highestbidder = 1;
   state state = 2;
 }
 
 enum state {
   ONGOING = 0;
-  LOST = 1;
-  WON = 2;
+  DONE = 1;
 }
 
 message ackmsg {

@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"sync"
 
 	auctionsystem "github.com/Mojjedrengen/AuctionSystem/grpc"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 type AuctionServer struct {
@@ -20,6 +22,8 @@ type AuctionServer struct {
 	bidStartTime  uint64
 	mu            sync.Mutex
 	lastWonBidder *auctionsystem.UUID
+	isBitOngoin   bool
+	state         auctionsystem.State
 }
 
 func (s *AuctionServer) knownBiddersInsert(UUID *auctionsystem.UUID) {
@@ -60,6 +64,13 @@ func (s *AuctionServer) Bid(ctx context.Context, amount *auctionsystem.Amount) (
 	var ack auctionsystem.Ackmsg
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.state != auctionsystem.State_ONGOING {
+		exceptmsg := "Bid is done. Please bid when new bid begins"
+		return &auctionsystem.Ackmsg{
+			Ack:       auctionsystem.Ack_EXCEPTION,
+			Exception: &exceptmsg,
+		}, errors.New("No currently active bids")
+	}
 	if amount.GetAmount() > s.highestBid {
 		s.highestBid = amount.GetAmount()
 		s.highestBidder = amount.GetId()
@@ -70,6 +81,22 @@ func (s *AuctionServer) Bid(ctx context.Context, amount *auctionsystem.Amount) (
 	} else {
 		return &auctionsystem.Ackmsg{
 			Ack: auctionsystem.Ack_FAIL,
+		}, nil
+	}
+}
+
+func (s *AuctionServer) Result(ctw context.Context, in *emptypb.Empty) (*auctionsystem.Resultmsg, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.state == auctionsystem.State_DONE {
+		return &auctionsystem.Resultmsg{
+			Highestbidder: s.lastWonBidder,
+			State:         s.state,
+		}, nil
+	} else {
+		return &auctionsystem.Resultmsg{
+			Highestbidder: s.highestBidder,
+			State:         s.state,
 		}, nil
 	}
 }
