@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option go_package = "github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystem";
+
+package auctionsystem;
+
+// NOTE cannot have a void input in gRPC as far as i know
+service Auction {
+  rpc bid(amount) returns (ackmsg) {}
+  rpc result(id) returns (resultmsg) {}
+}
+
+message amount {
+  uint64 amount = 1;
+  id id = 2;
+}
+
+message id { uint64 id = 1; }
+
+message resultmsg {
+  optional id highestbidder = 1;
+  state state = 2;
+}
+
+enum state {
+  ONGOING = 0;
+  LOST = 1;
+  WON = 2;
+}
+
+message ackmsg {
+  ack ack = 1;
+  optional string exception = 2;
+}
+
+enum ack {
+  FAIL = 0;
+  SUCCESS = 1;
+  EXCEPTION = 2;
+}
