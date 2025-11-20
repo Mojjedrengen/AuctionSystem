@@ -6,19 +6,19 @@ package auctionsystem;
 
 // NOTE cannot have a void input in gRPC as far as i know
 service Auction {
-  rpc bid(amount) returns (ackmsg) {}
-  rpc result(id) returns (resultmsg) {}
+  rpc Bid(amount) returns (ackmsg) {}
+  rpc Result(UUID) returns (resultmsg) {}
 }
 
 message amount {
   uint64 amount = 1;
-  id id = 2;
+  UUID id = 2;
 }
 
-message id { uint64 id = 1; }
+message UUID { string value = 1; }
 
 message resultmsg {
-  optional id highestbidder = 1;
+  optional UUID highestbidder = 1;
   state state = 2;
 }
 

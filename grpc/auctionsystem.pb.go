@@ -122,7 +122,7 @@ func (Ack) EnumDescriptor() ([]byte, []int) {
 type Amount struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Amount        uint64                 `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
-	Id            *Id                    `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Id            *UUID                  `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -164,34 +164,34 @@ func (x *Amount) GetAmount() uint64 {
 	return 0
 }
 
-func (x *Amount) GetId() *Id {
+func (x *Amount) GetId() *UUID {
 	if x != nil {
 		return x.Id
 	}
 	return nil
 }
 
-type Id struct {
+type UUID struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Id) Reset() {
-	*x = Id{}
+func (x *UUID) Reset() {
+	*x = UUID{}
 	mi := &file_grpc_auctionsystem_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Id) String() string {
+func (x *UUID) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Id) ProtoMessage() {}
+func (*UUID) ProtoMessage() {}
 
-func (x *Id) ProtoReflect() protoreflect.Message {
+func (x *UUID) ProtoReflect() protoreflect.Message {
 	mi := &file_grpc_auctionsystem_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -203,21 +203,21 @@ func (x *Id) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Id.ProtoReflect.Descriptor instead.
-func (*Id) Descriptor() ([]byte, []int) {
+// Deprecated: Use UUID.ProtoReflect.Descriptor instead.
+func (*UUID) Descriptor() ([]byte, []int) {
 	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Id) GetId() uint64 {
+func (x *UUID) GetValue() string {
 	if x != nil {
-		return x.Id
+		return x.Value
 	}
-	return 0
+	return ""
 }
 
 type Resultmsg struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Highestbidder *Id                    `protobuf:"bytes,1,opt,name=highestbidder,proto3,oneof" json:"highestbidder,omitempty"`
+	Highestbidder *UUID                  `protobuf:"bytes,1,opt,name=highestbidder,proto3,oneof" json:"highestbidder,omitempty"`
 	State         State                  `protobuf:"varint,2,opt,name=state,proto3,enum=auctionsystem.State" json:"state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -253,7 +253,7 @@ func (*Resultmsg) Descriptor() ([]byte, []int) {
 	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Resultmsg) GetHighestbidder() *Id {
+func (x *Resultmsg) GetHighestbidder() *UUID {
 	if x != nil {
 		return x.Highestbidder
 	}
@@ -323,14 +323,14 @@ var File_grpc_auctionsystem_proto protoreflect.FileDescriptor
 
 const file_grpc_auctionsystem_proto_rawDesc = "" +
 	"\n" +
-	"\x18grpc/auctionsystem.proto\x12\rauctionsystem\"C\n" +
+	"\x18grpc/auctionsystem.proto\x12\rauctionsystem\"E\n" +
 	"\x06amount\x12\x16\n" +
-	"\x06amount\x18\x01 \x01(\x04R\x06amount\x12!\n" +
-	"\x02id\x18\x02 \x01(\v2\x11.auctionsystem.idR\x02id\"\x14\n" +
-	"\x02id\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\"\x87\x01\n" +
-	"\tresultmsg\x12<\n" +
-	"\rhighestbidder\x18\x01 \x01(\v2\x11.auctionsystem.idH\x00R\rhighestbidder\x88\x01\x01\x12*\n" +
+	"\x06amount\x18\x01 \x01(\x04R\x06amount\x12#\n" +
+	"\x02id\x18\x02 \x01(\v2\x13.auctionsystem.UUIDR\x02id\"\x1c\n" +
+	"\x04UUID\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value\"\x89\x01\n" +
+	"\tresultmsg\x12>\n" +
+	"\rhighestbidder\x18\x01 \x01(\v2\x13.auctionsystem.UUIDH\x00R\rhighestbidder\x88\x01\x01\x12*\n" +
 	"\x05state\x18\x02 \x01(\x0e2\x14.auctionsystem.stateR\x05stateB\x10\n" +
 	"\x0e_highestbidder\"_\n" +
 	"\x06ackmsg\x12$\n" +
@@ -345,10 +345,10 @@ const file_grpc_auctionsystem_proto_rawDesc = "" +
 	"\x03ack\x12\b\n" +
 	"\x04FAIL\x10\x00\x12\v\n" +
 	"\aSUCCESS\x10\x01\x12\r\n" +
-	"\tEXCEPTION\x10\x022y\n" +
+	"\tEXCEPTION\x10\x022{\n" +
 	"\aAuction\x125\n" +
-	"\x03bid\x12\x15.auctionsystem.amount\x1a\x15.auctionsystem.ackmsg\"\x00\x127\n" +
-	"\x06result\x12\x11.auctionsystem.id\x1a\x18.auctionsystem.resultmsg\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
+	"\x03Bid\x12\x15.auctionsystem.amount\x1a\x15.auctionsystem.ackmsg\"\x00\x129\n" +
+	"\x06Result\x12\x13.auctionsystem.UUID\x1a\x18.auctionsystem.resultmsg\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
 
 var (
 	file_grpc_auctionsystem_proto_rawDescOnce sync.Once
@@ -368,19 +368,19 @@ var file_grpc_auctionsystem_proto_goTypes = []any{
 	(State)(0),        // 0: auctionsystem.state
 	(Ack)(0),          // 1: auctionsystem.ack
 	(*Amount)(nil),    // 2: auctionsystem.amount
-	(*Id)(nil),        // 3: auctionsystem.id
+	(*UUID)(nil),      // 3: auctionsystem.UUID
 	(*Resultmsg)(nil), // 4: auctionsystem.resultmsg
 	(*Ackmsg)(nil),    // 5: auctionsystem.ackmsg
 }
 var file_grpc_auctionsystem_proto_depIdxs = []int32{
-	3, // 0: auctionsystem.amount.id:type_name -> auctionsystem.id
-	3, // 1: auctionsystem.resultmsg.highestbidder:type_name -> auctionsystem.id
+	3, // 0: auctionsystem.amount.id:type_name -> auctionsystem.UUID
+	3, // 1: auctionsystem.resultmsg.highestbidder:type_name -> auctionsystem.UUID
 	0, // 2: auctionsystem.resultmsg.state:type_name -> auctionsystem.state
 	1, // 3: auctionsystem.ackmsg.ack:type_name -> auctionsystem.ack
-	2, // 4: auctionsystem.Auction.bid:input_type -> auctionsystem.amount
-	3, // 5: auctionsystem.Auction.result:input_type -> auctionsystem.id
-	5, // 6: auctionsystem.Auction.bid:output_type -> auctionsystem.ackmsg
-	4, // 7: auctionsystem.Auction.result:output_type -> auctionsystem.resultmsg
+	2, // 4: auctionsystem.Auction.Bid:input_type -> auctionsystem.amount
+	3, // 5: auctionsystem.Auction.Result:input_type -> auctionsystem.UUID
+	5, // 6: auctionsystem.Auction.Bid:output_type -> auctionsystem.ackmsg
+	4, // 7: auctionsystem.Auction.Result:output_type -> auctionsystem.resultmsg
 	6, // [6:8] is the sub-list for method output_type
 	4, // [4:6] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
