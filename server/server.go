@@ -27,6 +27,21 @@ type AuctionServer struct {
 	state         auctionsystem.State
 }
 
+func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool) *AuctionServer {
+	return &AuctionServer{
+		isLeader:      isLeader,
+		id:            id,
+		highestBidder: nil,
+		highestBid:    0,
+		knownBidders:  make([]*auctionsystem.UUID, 0),
+		bidTimeframe:  bidTimeframe,
+		bidStartTime:  uint64(time.Now().Unix()),
+		lastWonBidder: nil,
+		isBitOngoin:   true,
+		state:         auctionsystem.State_ONGOING,
+	}
+}
+
 func (s *AuctionServer) knownBiddersInsert(UUID *auctionsystem.UUID) {
 	s.mu.Lock()
 	s.knownBidders = append(s.knownBidders, UUID)
