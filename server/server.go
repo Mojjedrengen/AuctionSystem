@@ -117,7 +117,7 @@ func (s *AuctionServer) Result(ctw context.Context, in *emptypb.Empty) (*auction
 	}
 }
 
-func (s *AuctionServer) bidManager() {
+func (s *AuctionServer) BidManager() {
 	for {
 		s.mu.Lock()
 		switch s.state {
