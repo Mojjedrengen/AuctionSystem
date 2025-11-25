@@ -38,7 +38,7 @@ func main() {
 		isLeader = false
 	}
 
-	repServer, server := server.NewReplicationServer(
+	repServer, auctionserver := server.NewReplicationServer(
 		uint64(rand.Int()),
 		30,
 		isLeader,
@@ -47,11 +47,11 @@ func main() {
 		portRep,
 	)
 
-	go server.BidManager()
+	go auctionserver.BidManager()
 
 	grpcServer := grpc.NewServer()
 
-	auctionsystem.RegisterAuctionServer(grpcServer, server)
+	auctionsystem.RegisterAuctionServer(grpcServer, auctionserver)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
@@ -72,24 +72,4 @@ func main() {
 	for {
 	}
 	//fmt.Println(repServer.Fetch(context.Background(), &auctionsystem.Self{}))
-}
-
-func (s *AuctionServer) LeaderMonitor() {
-	if s.isLeader {
-		return
-	}
-
-	for {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		_, err := s.leaderHeartbeat.Heartbeat(ctx, &auctionsystem.Self{Id: s.id})
-		cancel()
-
-		if err != nil {
-			fmt.Println("heartbeat fail, leader might be dead", err)
-			s.promotoToLeader()
-			return
-		}
-
-		time.Sleep(1 * time.Second)
-	}
 }

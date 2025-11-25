@@ -25,6 +25,19 @@ type ReplicationServer struct {
 	self            *AuctionServer
 	selfAdress      string
 	leaderHeartbeat auctionsystem.ReplicationSyncClient
+	cluster         map[uint64]string
+}
+
+func (s *ReplicationServer) RegisterNode(ctx context.Context, req *auctionsystem.Self) (*emptypb.Empty, error) {
+	if !s.self.isLeader {
+		return nil, errors.New("not leader")
+	}
+
+	s.cluster[req.Id] = req.Address
+
+	fmt.Println("node registered: ", req.Id, "at", req.Address)
+
+	return &emptypb.Empty{}, nil
 }
 
 type AuctionServer struct {
@@ -90,7 +103,8 @@ func (s *ReplicationServer) GetLeader() auctionsystem.ReplicationSyncClient {
 
 func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, port uint16) (*ReplicationServer, *AuctionServer) {
 	s := &ReplicationServer{}
-	s.self = NewAuctionServer(id, bidTimeframe, isLeader, leaderAddr)
+	s.self = NewAuctionServer(id, bidTimeframe, isLeader, leaderAddr, leaderAddrReplication)
+	s.cluster = make(map[uint64]string)
 
 	if !isLeader {
 
@@ -117,7 +131,7 @@ func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderA
 	return s, s.self
 }
 
-func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string) *AuctionServer {
+func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string) *AuctionServer {
 	s := &AuctionServer{
 		isLeader:      isLeader,
 		leaderAddr:    leaderAddr,
@@ -136,13 +150,24 @@ func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr 
 
 		var opts []grpc.DialOption
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		conn, err := grpc.NewClient(leaderAddr, opts...)
+		conn, err := grpc.NewClient(leaderAddrReplication, opts...)
 		if err != nil {
 			log.Fatalf("Failed to connect to leader during startup: %v", err)
 		}
 		s.leaderConn = conn
 		s.leader = auctionsystem.NewAuctionClient(conn)
 		s.leaderHeartbeat = auctionsystem.NewReplicationSyncClient(conn)
+
+		_, err = s.leaderHeartbeat.RegisterNode(
+			context.Background(),
+			&auctionsystem.Self{
+				Address: s.leaderAddr,
+				Id:      s.id,
+			},
+		)
+		if err != nil {
+			log.Println("error registering node with leader: ", err)
+		}
 	}
 	go s.LeaderMonitor()
 	return s
