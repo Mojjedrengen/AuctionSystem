@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"net"
 	"sort"
 	"sync"
 	"time"
@@ -13,6 +15,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
+
+type ReplicationServer struct {
+	auctionsystem.UnimplementedReplicationSyncServer
+
+	leaderAddr string
+	leaderConn *grpc.ClientConn
+	leader     auctionsystem.ReplicationSyncClient
+	self       *AuctionServer
+	selfAdress string
+}
 
 type AuctionServer struct {
 	auctionsystem.UnimplementedAuctionServer
@@ -32,6 +44,34 @@ type AuctionServer struct {
 	lastWonBidder *auctionsystem.UUID
 	isBitOngoin   bool
 	state         auctionsystem.State
+}
+
+func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, port uint16) (*ReplicationServer, *AuctionServer) {
+	s := &ReplicationServer{}
+	s.self = NewAuctionServer(id, bidTimeframe, isLeader, leaderAddr)
+
+	if !isLeader {
+
+		var opts []grpc.DialOption
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(leaderAddrReplication, opts...)
+		if err != nil {
+			log.Fatalf("Failed to connect to leader during startup: %v", err)
+		}
+		s.leaderConn = conn
+		s.leader = auctionsystem.NewReplicationSyncClient(conn)
+	}
+	s.selfAdress = fmt.Sprintf("localhost:%d", port)
+	lis, err := net.Listen("tcp", s.selfAdress)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	var opts []grpc.ServerOption
+
+	grpcServer := grpc.NewServer(opts...)
+	auctionsystem.RegisterReplicationSyncServer(grpcServer, s)
+	grpcServer.Serve(lis)
+	return s, s.self
 }
 
 func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string) *AuctionServer {
@@ -170,4 +210,23 @@ func (s *AuctionServer) BidManager() {
 func ServerManager(s *AuctionServer, grpc grpc.ServiceRegistrar) {
 	go s.BidManager()
 
+}
+
+func (s *ReplicationServer) Fetch(ctx context.Context, nonLeader *auctionsystem.Self) (*auctionsystem.AuctionData, error) {
+	s.self.mu.Lock()
+	defer s.self.mu.Unlock()
+	if !s.self.isLeader {
+		return nil, errors.New("Is not leader")
+	} else {
+		return &auctionsystem.AuctionData{
+			Highestbidder: s.self.highestBidder,
+			HighestBid:    s.self.highestBid,
+			KnownBidders:  s.self.knownBidders,
+			BidTimeFrame:  s.self.bidTimeframe,
+			BidStartTime:  s.self.bidStartTime,
+			LastWonBidder: s.self.lastWonBidder,
+			IsBitOngoin:   s.self.isBitOngoin,
+			State:         s.self.state,
+		}, nil
+	}
 }

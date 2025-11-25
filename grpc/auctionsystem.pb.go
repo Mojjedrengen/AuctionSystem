@@ -317,6 +317,158 @@ func (x *Ackmsg) GetException() string {
 	return ""
 }
 
+type Self struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Address       string                 `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Id            uint64                 `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Self) Reset() {
+	*x = Self{}
+	mi := &file_grpc_auctionsystem_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Self) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Self) ProtoMessage() {}
+
+func (x *Self) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_auctionsystem_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Self.ProtoReflect.Descriptor instead.
+func (*Self) Descriptor() ([]byte, []int) {
+	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Self) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *Self) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type AuctionData struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Highestbidder *UUID                  `protobuf:"bytes,1,opt,name=highestbidder,proto3" json:"highestbidder,omitempty"`
+	HighestBid    uint64                 `protobuf:"varint,2,opt,name=highestBid,proto3" json:"highestBid,omitempty"`
+	KnownBidders  []*UUID                `protobuf:"bytes,3,rep,name=knownBidders,proto3" json:"knownBidders,omitempty"`
+	BidTimeFrame  uint32                 `protobuf:"varint,4,opt,name=bidTimeFrame,proto3" json:"bidTimeFrame,omitempty"`
+	BidStartTime  uint64                 `protobuf:"varint,5,opt,name=bidStartTime,proto3" json:"bidStartTime,omitempty"`
+	LastWonBidder *UUID                  `protobuf:"bytes,6,opt,name=lastWonBidder,proto3" json:"lastWonBidder,omitempty"`
+	IsBitOngoin   bool                   `protobuf:"varint,7,opt,name=isBitOngoin,proto3" json:"isBitOngoin,omitempty"`
+	State         State                  `protobuf:"varint,8,opt,name=state,proto3,enum=auctionsystem.State" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuctionData) Reset() {
+	*x = AuctionData{}
+	mi := &file_grpc_auctionsystem_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuctionData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuctionData) ProtoMessage() {}
+
+func (x *AuctionData) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_auctionsystem_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuctionData.ProtoReflect.Descriptor instead.
+func (*AuctionData) Descriptor() ([]byte, []int) {
+	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AuctionData) GetHighestbidder() *UUID {
+	if x != nil {
+		return x.Highestbidder
+	}
+	return nil
+}
+
+func (x *AuctionData) GetHighestBid() uint64 {
+	if x != nil {
+		return x.HighestBid
+	}
+	return 0
+}
+
+func (x *AuctionData) GetKnownBidders() []*UUID {
+	if x != nil {
+		return x.KnownBidders
+	}
+	return nil
+}
+
+func (x *AuctionData) GetBidTimeFrame() uint32 {
+	if x != nil {
+		return x.BidTimeFrame
+	}
+	return 0
+}
+
+func (x *AuctionData) GetBidStartTime() uint64 {
+	if x != nil {
+		return x.BidStartTime
+	}
+	return 0
+}
+
+func (x *AuctionData) GetLastWonBidder() *UUID {
+	if x != nil {
+		return x.LastWonBidder
+	}
+	return nil
+}
+
+func (x *AuctionData) GetIsBitOngoin() bool {
+	if x != nil {
+		return x.IsBitOngoin
+	}
+	return false
+}
+
+func (x *AuctionData) GetState() State {
+	if x != nil {
+		return x.State
+	}
+	return State_ONGOING
+}
+
 var File_grpc_auctionsystem_proto protoreflect.FileDescriptor
 
 const file_grpc_auctionsystem_proto_rawDesc = "" +
@@ -334,7 +486,21 @@ const file_grpc_auctionsystem_proto_rawDesc = "" +
 	"\x03ack\x18\x01 \x01(\x0e2\x12.auctionsystem.ackR\x03ack\x12!\n" +
 	"\texception\x18\x02 \x01(\tH\x00R\texception\x88\x01\x01B\f\n" +
 	"\n" +
-	"_exception*\x1e\n" +
+	"_exception\"0\n" +
+	"\x04self\x12\x18\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\x04R\x02id\"\xf2\x02\n" +
+	"\vAuctionData\x129\n" +
+	"\rhighestbidder\x18\x01 \x01(\v2\x13.auctionsystem.UUIDR\rhighestbidder\x12\x1e\n" +
+	"\n" +
+	"highestBid\x18\x02 \x01(\x04R\n" +
+	"highestBid\x127\n" +
+	"\fknownBidders\x18\x03 \x03(\v2\x13.auctionsystem.UUIDR\fknownBidders\x12\"\n" +
+	"\fbidTimeFrame\x18\x04 \x01(\rR\fbidTimeFrame\x12\"\n" +
+	"\fbidStartTime\x18\x05 \x01(\x04R\fbidStartTime\x129\n" +
+	"\rlastWonBidder\x18\x06 \x01(\v2\x13.auctionsystem.UUIDR\rlastWonBidder\x12 \n" +
+	"\visBitOngoin\x18\a \x01(\bR\visBitOngoin\x12*\n" +
+	"\x05state\x18\b \x01(\x0e2\x14.auctionsystem.stateR\x05state*\x1e\n" +
 	"\x05state\x12\v\n" +
 	"\aONGOING\x10\x00\x12\b\n" +
 	"\x04DONE\x10\x01*+\n" +
@@ -344,7 +510,9 @@ const file_grpc_auctionsystem_proto_rawDesc = "" +
 	"\tEXCEPTION\x10\x022~\n" +
 	"\aAuction\x125\n" +
 	"\x03Bid\x12\x15.auctionsystem.amount\x1a\x15.auctionsystem.ackmsg\"\x00\x12<\n" +
-	"\x06Result\x12\x16.google.protobuf.Empty\x1a\x18.auctionsystem.resultmsg\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
+	"\x06Result\x12\x16.google.protobuf.Empty\x1a\x18.auctionsystem.resultmsg\"\x002M\n" +
+	"\x0fReplicationSync\x12:\n" +
+	"\x05Fetch\x12\x13.auctionsystem.self\x1a\x1a.auctionsystem.AuctionData\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
 
 var (
 	file_grpc_auctionsystem_proto_rawDescOnce sync.Once
@@ -359,7 +527,7 @@ func file_grpc_auctionsystem_proto_rawDescGZIP() []byte {
 }
 
 var file_grpc_auctionsystem_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_grpc_auctionsystem_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_grpc_auctionsystem_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_grpc_auctionsystem_proto_goTypes = []any{
 	(State)(0),            // 0: auctionsystem.state
 	(Ack)(0),              // 1: auctionsystem.ack
@@ -367,22 +535,30 @@ var file_grpc_auctionsystem_proto_goTypes = []any{
 	(*UUID)(nil),          // 3: auctionsystem.UUID
 	(*Resultmsg)(nil),     // 4: auctionsystem.resultmsg
 	(*Ackmsg)(nil),        // 5: auctionsystem.ackmsg
-	(*emptypb.Empty)(nil), // 6: google.protobuf.Empty
+	(*Self)(nil),          // 6: auctionsystem.self
+	(*AuctionData)(nil),   // 7: auctionsystem.AuctionData
+	(*emptypb.Empty)(nil), // 8: google.protobuf.Empty
 }
 var file_grpc_auctionsystem_proto_depIdxs = []int32{
-	3, // 0: auctionsystem.amount.id:type_name -> auctionsystem.UUID
-	3, // 1: auctionsystem.resultmsg.highestbidder:type_name -> auctionsystem.UUID
-	0, // 2: auctionsystem.resultmsg.state:type_name -> auctionsystem.state
-	1, // 3: auctionsystem.ackmsg.ack:type_name -> auctionsystem.ack
-	2, // 4: auctionsystem.Auction.Bid:input_type -> auctionsystem.amount
-	6, // 5: auctionsystem.Auction.Result:input_type -> google.protobuf.Empty
-	5, // 6: auctionsystem.Auction.Bid:output_type -> auctionsystem.ackmsg
-	4, // 7: auctionsystem.Auction.Result:output_type -> auctionsystem.resultmsg
-	6, // [6:8] is the sub-list for method output_type
-	4, // [4:6] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	3,  // 0: auctionsystem.amount.id:type_name -> auctionsystem.UUID
+	3,  // 1: auctionsystem.resultmsg.highestbidder:type_name -> auctionsystem.UUID
+	0,  // 2: auctionsystem.resultmsg.state:type_name -> auctionsystem.state
+	1,  // 3: auctionsystem.ackmsg.ack:type_name -> auctionsystem.ack
+	3,  // 4: auctionsystem.AuctionData.highestbidder:type_name -> auctionsystem.UUID
+	3,  // 5: auctionsystem.AuctionData.knownBidders:type_name -> auctionsystem.UUID
+	3,  // 6: auctionsystem.AuctionData.lastWonBidder:type_name -> auctionsystem.UUID
+	0,  // 7: auctionsystem.AuctionData.state:type_name -> auctionsystem.state
+	2,  // 8: auctionsystem.Auction.Bid:input_type -> auctionsystem.amount
+	8,  // 9: auctionsystem.Auction.Result:input_type -> google.protobuf.Empty
+	6,  // 10: auctionsystem.ReplicationSync.Fetch:input_type -> auctionsystem.self
+	5,  // 11: auctionsystem.Auction.Bid:output_type -> auctionsystem.ackmsg
+	4,  // 12: auctionsystem.Auction.Result:output_type -> auctionsystem.resultmsg
+	7,  // 13: auctionsystem.ReplicationSync.Fetch:output_type -> auctionsystem.AuctionData
+	11, // [11:14] is the sub-list for method output_type
+	8,  // [8:11] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_grpc_auctionsystem_proto_init() }
@@ -397,9 +573,9 @@ func file_grpc_auctionsystem_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_auctionsystem_proto_rawDesc), len(file_grpc_auctionsystem_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_grpc_auctionsystem_proto_goTypes,
 		DependencyIndexes: file_grpc_auctionsystem_proto_depIdxs,
