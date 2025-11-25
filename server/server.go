@@ -234,3 +234,10 @@ func (s *ReplicationServer) Fetch(ctx context.Context, nonLeader *auctionsystem.
 		}, nil
 	}
 }
+
+func (s *ReplicationServer) Heartbeat(ctx context.Context, req *auctionsystem.Self) (*emptypb.Empty, error) {
+	if !s.self.isLeader {
+		return nil, errors.New("not the leader")
+	}
+	return &emptypb.Empty{}, nil
+}
