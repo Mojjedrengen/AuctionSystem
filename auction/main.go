@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
+	"time"
 
 	auctionsystem "github.com/Mojjedrengen/AuctionSystem/grpc"
 	"github.com/Mojjedrengen/AuctionSystem/server"
@@ -12,10 +15,36 @@ import (
 )
 
 func main() {
-	server := server.NewAuctionServer(
-		1,
+	var leaderAdress string
+	var leaderAdressRep string
+	var port uint16
+	var portRep uint16
+
+	fmt.Println("leaderAdress")
+	fmt.Scanln(&leaderAdress)
+	fmt.Println(leaderAdress)
+	fmt.Println("leaderAdress Replication")
+	fmt.Scanln(&leaderAdressRep)
+	fmt.Println(leaderAdressRep)
+	fmt.Println("port to listen to")
+	fmt.Scanln(&port)
+	fmt.Println(port)
+	fmt.Println("port to listen to (replication)")
+	fmt.Scanln(&portRep)
+	fmt.Println(portRep)
+	isLeader := true
+
+	if leaderAdress != "" {
+		isLeader = false
+	}
+
+	repServer, server := server.NewReplicationServer(
+		uint64(rand.Int()),
 		30,
-		true,
+		isLeader,
+		leaderAdress,
+		leaderAdressRep,
+		portRep,
 	)
 
 	go server.BidManager()
@@ -24,13 +53,16 @@ func main() {
 
 	auctionsystem.RegisterAuctionServer(grpcServer, server)
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failted to listen: %v", err)
 	}
-	fmt.Println("Auction server running on port 50051")
+	fmt.Printf("Auction server running on port %d\n", port)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failted to server %v", err)
 	}
+
+	time.Sleep(10 * time.Second)
+	fmt.Println(repServer.Fetch(context.Background(), &auctionsystem.Self{}))
 }

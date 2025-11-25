@@ -70,7 +70,7 @@ func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderA
 
 	grpcServer := grpc.NewServer(opts...)
 	auctionsystem.RegisterReplicationSyncServer(grpcServer, s)
-	grpcServer.Serve(lis)
+	go grpcServer.Serve(lis)
 	return s, s.self
 }
 
