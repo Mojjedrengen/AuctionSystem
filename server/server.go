@@ -40,30 +40,60 @@ func (s *ReplicationServer) RegisterNode(ctx context.Context, req *auctionsystem
 	return &emptypb.Empty{}, nil
 }
 
+func (s *ReplicationServer) GetCluster(ctx context.Context, req *auctionsystem.Self) (*auctionsystem.ClusterInfo, error) {
+	if !s.self.isLeader {
+		return nil, errors.New("not leader")
+	}
+
+	result := &auctionsystem.ClusterInfo{
+		Members: make(map[uint64]string),
+	}
+
+	for id, addr := range s.cluster {
+		result.Members[id] = addr
+	}
+	result.Members[s.self.id] = s.selfAdress
+
+	return result, nil
+}
+
 type AuctionServer struct {
 	auctionsystem.UnimplementedAuctionServer
 
-	isLeader        bool
-	leaderAddr      string
-	bidChan         chan auctionsystem.Ackmsg
-	leaderConn      *grpc.ClientConn
-	leader          auctionsystem.AuctionClient
-	id              uint64
-	highestBidder   *auctionsystem.UUID
-	highestBid      uint64
-	knownBidders    []*auctionsystem.UUID
-	bidTimeframe    uint32
-	bidStartTime    uint64
-	mu              sync.Mutex
-	lastWonBidder   *auctionsystem.UUID
-	isBitOngoin     bool
-	state           auctionsystem.State
-	leaderHeartbeat auctionsystem.ReplicationSyncClient
+	isLeader               bool
+	leaderAddr             string
+	bidChan                chan auctionsystem.Ackmsg
+	leaderConn             *grpc.ClientConn
+	leader                 auctionsystem.AuctionClient
+	id                     uint64
+	highestBidder          *auctionsystem.UUID
+	highestBid             uint64
+	knownBidders           []*auctionsystem.UUID
+	bidTimeframe           uint32
+	bidStartTime           uint64
+	mu                     sync.Mutex
+	lastWonBidder          *auctionsystem.UUID
+	isBitOngoin            bool
+	state                  auctionsystem.State
+	leaderHeartbeat        auctionsystem.ReplicationSyncClient
+	selfReplicationAddress string
+}
+
+func (s *AuctionServer) ApplySnapshot(data *auctionsystem.AuctionData) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.highestBid = data.HighestBid
+	s.highestBidder = data.Highestbidder
+	s.knownBidders = data.KnownBidders
+	s.bidTimeframe = data.BidTimeFrame
+	s.bidStartTime = data.BidStartTime
+	s.lastWonBidder = data.LastWonBidder
+	s.isBitOngoin = data.IsBitOngoin
+	s.state = data.State
 }
 
 func (s *AuctionServer) promotoToLeader() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	fmt.Println("Node: ", s.id, " is now promoting itself to leader")
 
@@ -89,8 +119,32 @@ func (s *AuctionServer) LeaderMonitor() {
 
 		if err != nil {
 			fmt.Println("heartbeat fail, leader might be dead", err)
-			s.promotoToLeader()
+			cluster, err2 := s.leaderHeartbeat.GetCluster(context.Background(), &auctionsystem.Self{Id: s.id})
+			if err2 != nil {
+				fmt.Println("could not get cluster", err2)
+				s.promotoToLeader()
+				return
+			}
+
+			highest := s.id
+			for otherID := range cluster.Members {
+				if otherID > highest {
+					highest = otherID
+				}
+			}
+
+			if highest == s.id {
+				fmt.Println("Promoting self to leader")
+				s.promotoToLeader()
+			} else {
+				fmt.Println("I'm not highest ID, waiting for other node to become leader")
+			}
 			return
+		}
+
+		data, err2 := s.leaderHeartbeat.Fetch(context.Background(), &auctionsystem.Self{Id: s.id})
+		if err2 == nil {
+			s.ApplySnapshot(data)
 		}
 
 		time.Sleep(1 * time.Second)
@@ -103,8 +157,12 @@ func (s *ReplicationServer) GetLeader() auctionsystem.ReplicationSyncClient {
 
 func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, port uint16) (*ReplicationServer, *AuctionServer) {
 	s := &ReplicationServer{}
-	s.self = NewAuctionServer(id, bidTimeframe, isLeader, leaderAddr, leaderAddrReplication)
 	s.cluster = make(map[uint64]string)
+
+	selfAddr := fmt.Sprintf("localhost:%d", port)
+	s.selfAdress = selfAddr
+
+	s.self = NewAuctionServer(id, bidTimeframe, isLeader, leaderAddr, leaderAddrReplication, selfAddr)
 
 	if !isLeader {
 
@@ -131,20 +189,21 @@ func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderA
 	return s, s.self
 }
 
-func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string) *AuctionServer {
+func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, selfReplicationAddress string) *AuctionServer {
 	s := &AuctionServer{
-		isLeader:      isLeader,
-		leaderAddr:    leaderAddr,
-		bidChan:       make(chan auctionsystem.Ackmsg),
-		id:            id,
-		highestBidder: nil,
-		highestBid:    0,
-		knownBidders:  make([]*auctionsystem.UUID, 0),
-		bidTimeframe:  bidTimeframe,
-		bidStartTime:  uint64(time.Now().Unix()),
-		lastWonBidder: nil,
-		isBitOngoin:   true,
-		state:         auctionsystem.State_ONGOING,
+		isLeader:               isLeader,
+		leaderAddr:             leaderAddr,
+		bidChan:                make(chan auctionsystem.Ackmsg),
+		id:                     id,
+		highestBidder:          nil,
+		highestBid:             0,
+		knownBidders:           make([]*auctionsystem.UUID, 0),
+		bidTimeframe:           bidTimeframe,
+		bidStartTime:           uint64(time.Now().Unix()),
+		lastWonBidder:          nil,
+		isBitOngoin:            true,
+		state:                  auctionsystem.State_ONGOING,
+		selfReplicationAddress: selfReplicationAddress,
 	}
 	if !isLeader {
 
@@ -161,7 +220,7 @@ func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr 
 		_, err = s.leaderHeartbeat.RegisterNode(
 			context.Background(),
 			&auctionsystem.Self{
-				Address: s.leaderAddr,
+				Address: s.selfReplicationAddress,
 				Id:      s.id,
 			},
 		)

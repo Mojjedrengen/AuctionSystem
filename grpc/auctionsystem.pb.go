@@ -265,6 +265,50 @@ func (x *Resultmsg) GetState() State {
 	return State_ONGOING
 }
 
+type ClusterInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Members       map[uint64]string      `protobuf:"bytes,1,rep,name=members,proto3" json:"members,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClusterInfo) Reset() {
+	*x = ClusterInfo{}
+	mi := &file_grpc_auctionsystem_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClusterInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClusterInfo) ProtoMessage() {}
+
+func (x *ClusterInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_grpc_auctionsystem_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClusterInfo.ProtoReflect.Descriptor instead.
+func (*ClusterInfo) Descriptor() ([]byte, []int) {
+	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ClusterInfo) GetMembers() map[uint64]string {
+	if x != nil {
+		return x.Members
+	}
+	return nil
+}
+
 type Ackmsg struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ack           Ack                    `protobuf:"varint,1,opt,name=ack,proto3,enum=auctionsystem.Ack" json:"ack,omitempty"`
@@ -275,7 +319,7 @@ type Ackmsg struct {
 
 func (x *Ackmsg) Reset() {
 	*x = Ackmsg{}
-	mi := &file_grpc_auctionsystem_proto_msgTypes[3]
+	mi := &file_grpc_auctionsystem_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -287,7 +331,7 @@ func (x *Ackmsg) String() string {
 func (*Ackmsg) ProtoMessage() {}
 
 func (x *Ackmsg) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_auctionsystem_proto_msgTypes[3]
+	mi := &file_grpc_auctionsystem_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -300,7 +344,7 @@ func (x *Ackmsg) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ackmsg.ProtoReflect.Descriptor instead.
 func (*Ackmsg) Descriptor() ([]byte, []int) {
-	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{3}
+	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Ackmsg) GetAck() Ack {
@@ -327,7 +371,7 @@ type Self struct {
 
 func (x *Self) Reset() {
 	*x = Self{}
-	mi := &file_grpc_auctionsystem_proto_msgTypes[4]
+	mi := &file_grpc_auctionsystem_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +383,7 @@ func (x *Self) String() string {
 func (*Self) ProtoMessage() {}
 
 func (x *Self) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_auctionsystem_proto_msgTypes[4]
+	mi := &file_grpc_auctionsystem_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,7 +396,7 @@ func (x *Self) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Self.ProtoReflect.Descriptor instead.
 func (*Self) Descriptor() ([]byte, []int) {
-	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{4}
+	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Self) GetAddress() string {
@@ -385,7 +429,7 @@ type AuctionData struct {
 
 func (x *AuctionData) Reset() {
 	*x = AuctionData{}
-	mi := &file_grpc_auctionsystem_proto_msgTypes[5]
+	mi := &file_grpc_auctionsystem_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -397,7 +441,7 @@ func (x *AuctionData) String() string {
 func (*AuctionData) ProtoMessage() {}
 
 func (x *AuctionData) ProtoReflect() protoreflect.Message {
-	mi := &file_grpc_auctionsystem_proto_msgTypes[5]
+	mi := &file_grpc_auctionsystem_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -410,7 +454,7 @@ func (x *AuctionData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuctionData.ProtoReflect.Descriptor instead.
 func (*AuctionData) Descriptor() ([]byte, []int) {
-	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{5}
+	return file_grpc_auctionsystem_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *AuctionData) GetHighestbidder() *UUID {
@@ -481,7 +525,12 @@ const file_grpc_auctionsystem_proto_rawDesc = "" +
 	"\x05value\x18\x01 \x01(\tR\x05value\"r\n" +
 	"\tresultmsg\x129\n" +
 	"\rhighestbidder\x18\x01 \x01(\v2\x13.auctionsystem.UUIDR\rhighestbidder\x12*\n" +
-	"\x05state\x18\x02 \x01(\x0e2\x14.auctionsystem.stateR\x05state\"_\n" +
+	"\x05state\x18\x02 \x01(\x0e2\x14.auctionsystem.stateR\x05state\"\x8c\x01\n" +
+	"\vClusterInfo\x12A\n" +
+	"\amembers\x18\x01 \x03(\v2'.auctionsystem.ClusterInfo.MembersEntryR\amembers\x1a:\n" +
+	"\fMembersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x04R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"_\n" +
 	"\x06ackmsg\x12$\n" +
 	"\x03ack\x18\x01 \x01(\x0e2\x12.auctionsystem.ackR\x03ack\x12!\n" +
 	"\texception\x18\x02 \x01(\tH\x00R\texception\x88\x01\x01B\f\n" +
@@ -510,11 +559,13 @@ const file_grpc_auctionsystem_proto_rawDesc = "" +
 	"\tEXCEPTION\x10\x022~\n" +
 	"\aAuction\x125\n" +
 	"\x03Bid\x12\x15.auctionsystem.amount\x1a\x15.auctionsystem.ackmsg\"\x00\x12<\n" +
-	"\x06Result\x12\x16.google.protobuf.Empty\x1a\x18.auctionsystem.resultmsg\"\x002\xc8\x01\n" +
+	"\x06Result\x12\x16.google.protobuf.Empty\x1a\x18.auctionsystem.resultmsg\"\x002\x87\x02\n" +
 	"\x0fReplicationSync\x12:\n" +
 	"\x05Fetch\x12\x13.auctionsystem.self\x1a\x1a.auctionsystem.AuctionData\"\x00\x12:\n" +
 	"\tHeartbeat\x12\x13.auctionsystem.self\x1a\x16.google.protobuf.Empty\"\x00\x12=\n" +
-	"\fRegisterNode\x12\x13.auctionsystem.self\x1a\x16.google.protobuf.Empty\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
+	"\fRegisterNode\x12\x13.auctionsystem.self\x1a\x16.google.protobuf.Empty\"\x00\x12=\n" +
+	"\n" +
+	"GetCluster\x12\x13.auctionsystem.self\x1a\x1a.auctionsystem.ClusterInfoB:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
 
 var (
 	file_grpc_auctionsystem_proto_rawDescOnce sync.Once
@@ -529,42 +580,47 @@ func file_grpc_auctionsystem_proto_rawDescGZIP() []byte {
 }
 
 var file_grpc_auctionsystem_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_grpc_auctionsystem_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_grpc_auctionsystem_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_grpc_auctionsystem_proto_goTypes = []any{
 	(State)(0),            // 0: auctionsystem.state
 	(Ack)(0),              // 1: auctionsystem.ack
 	(*Amount)(nil),        // 2: auctionsystem.amount
 	(*UUID)(nil),          // 3: auctionsystem.UUID
 	(*Resultmsg)(nil),     // 4: auctionsystem.resultmsg
-	(*Ackmsg)(nil),        // 5: auctionsystem.ackmsg
-	(*Self)(nil),          // 6: auctionsystem.self
-	(*AuctionData)(nil),   // 7: auctionsystem.AuctionData
-	(*emptypb.Empty)(nil), // 8: google.protobuf.Empty
+	(*ClusterInfo)(nil),   // 5: auctionsystem.ClusterInfo
+	(*Ackmsg)(nil),        // 6: auctionsystem.ackmsg
+	(*Self)(nil),          // 7: auctionsystem.self
+	(*AuctionData)(nil),   // 8: auctionsystem.AuctionData
+	nil,                   // 9: auctionsystem.ClusterInfo.MembersEntry
+	(*emptypb.Empty)(nil), // 10: google.protobuf.Empty
 }
 var file_grpc_auctionsystem_proto_depIdxs = []int32{
 	3,  // 0: auctionsystem.amount.id:type_name -> auctionsystem.UUID
 	3,  // 1: auctionsystem.resultmsg.highestbidder:type_name -> auctionsystem.UUID
 	0,  // 2: auctionsystem.resultmsg.state:type_name -> auctionsystem.state
-	1,  // 3: auctionsystem.ackmsg.ack:type_name -> auctionsystem.ack
-	3,  // 4: auctionsystem.AuctionData.highestbidder:type_name -> auctionsystem.UUID
-	3,  // 5: auctionsystem.AuctionData.knownBidders:type_name -> auctionsystem.UUID
-	3,  // 6: auctionsystem.AuctionData.lastWonBidder:type_name -> auctionsystem.UUID
-	0,  // 7: auctionsystem.AuctionData.state:type_name -> auctionsystem.state
-	2,  // 8: auctionsystem.Auction.Bid:input_type -> auctionsystem.amount
-	8,  // 9: auctionsystem.Auction.Result:input_type -> google.protobuf.Empty
-	6,  // 10: auctionsystem.ReplicationSync.Fetch:input_type -> auctionsystem.self
-	6,  // 11: auctionsystem.ReplicationSync.Heartbeat:input_type -> auctionsystem.self
-	6,  // 12: auctionsystem.ReplicationSync.RegisterNode:input_type -> auctionsystem.self
-	5,  // 13: auctionsystem.Auction.Bid:output_type -> auctionsystem.ackmsg
-	4,  // 14: auctionsystem.Auction.Result:output_type -> auctionsystem.resultmsg
-	7,  // 15: auctionsystem.ReplicationSync.Fetch:output_type -> auctionsystem.AuctionData
-	8,  // 16: auctionsystem.ReplicationSync.Heartbeat:output_type -> google.protobuf.Empty
-	8,  // 17: auctionsystem.ReplicationSync.RegisterNode:output_type -> google.protobuf.Empty
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	9,  // 3: auctionsystem.ClusterInfo.members:type_name -> auctionsystem.ClusterInfo.MembersEntry
+	1,  // 4: auctionsystem.ackmsg.ack:type_name -> auctionsystem.ack
+	3,  // 5: auctionsystem.AuctionData.highestbidder:type_name -> auctionsystem.UUID
+	3,  // 6: auctionsystem.AuctionData.knownBidders:type_name -> auctionsystem.UUID
+	3,  // 7: auctionsystem.AuctionData.lastWonBidder:type_name -> auctionsystem.UUID
+	0,  // 8: auctionsystem.AuctionData.state:type_name -> auctionsystem.state
+	2,  // 9: auctionsystem.Auction.Bid:input_type -> auctionsystem.amount
+	10, // 10: auctionsystem.Auction.Result:input_type -> google.protobuf.Empty
+	7,  // 11: auctionsystem.ReplicationSync.Fetch:input_type -> auctionsystem.self
+	7,  // 12: auctionsystem.ReplicationSync.Heartbeat:input_type -> auctionsystem.self
+	7,  // 13: auctionsystem.ReplicationSync.RegisterNode:input_type -> auctionsystem.self
+	7,  // 14: auctionsystem.ReplicationSync.GetCluster:input_type -> auctionsystem.self
+	6,  // 15: auctionsystem.Auction.Bid:output_type -> auctionsystem.ackmsg
+	4,  // 16: auctionsystem.Auction.Result:output_type -> auctionsystem.resultmsg
+	8,  // 17: auctionsystem.ReplicationSync.Fetch:output_type -> auctionsystem.AuctionData
+	10, // 18: auctionsystem.ReplicationSync.Heartbeat:output_type -> google.protobuf.Empty
+	10, // 19: auctionsystem.ReplicationSync.RegisterNode:output_type -> google.protobuf.Empty
+	5,  // 20: auctionsystem.ReplicationSync.GetCluster:output_type -> auctionsystem.ClusterInfo
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_grpc_auctionsystem_proto_init() }
@@ -572,14 +628,14 @@ func file_grpc_auctionsystem_proto_init() {
 	if File_grpc_auctionsystem_proto != nil {
 		return
 	}
-	file_grpc_auctionsystem_proto_msgTypes[3].OneofWrappers = []any{}
+	file_grpc_auctionsystem_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_auctionsystem_proto_rawDesc), len(file_grpc_auctionsystem_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

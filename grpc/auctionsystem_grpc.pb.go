@@ -167,6 +167,7 @@ const (
 	ReplicationSync_Fetch_FullMethodName        = "/auctionsystem.ReplicationSync/Fetch"
 	ReplicationSync_Heartbeat_FullMethodName    = "/auctionsystem.ReplicationSync/Heartbeat"
 	ReplicationSync_RegisterNode_FullMethodName = "/auctionsystem.ReplicationSync/RegisterNode"
+	ReplicationSync_GetCluster_FullMethodName   = "/auctionsystem.ReplicationSync/GetCluster"
 )
 
 // ReplicationSyncClient is the client API for ReplicationSync service.
@@ -176,6 +177,7 @@ type ReplicationSyncClient interface {
 	Fetch(ctx context.Context, in *Self, opts ...grpc.CallOption) (*AuctionData, error)
 	Heartbeat(ctx context.Context, in *Self, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	RegisterNode(ctx context.Context, in *Self, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetCluster(ctx context.Context, in *Self, opts ...grpc.CallOption) (*ClusterInfo, error)
 }
 
 type replicationSyncClient struct {
@@ -216,6 +218,16 @@ func (c *replicationSyncClient) RegisterNode(ctx context.Context, in *Self, opts
 	return out, nil
 }
 
+func (c *replicationSyncClient) GetCluster(ctx context.Context, in *Self, opts ...grpc.CallOption) (*ClusterInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClusterInfo)
+	err := c.cc.Invoke(ctx, ReplicationSync_GetCluster_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ReplicationSyncServer is the server API for ReplicationSync service.
 // All implementations must embed UnimplementedReplicationSyncServer
 // for forward compatibility.
@@ -223,6 +235,7 @@ type ReplicationSyncServer interface {
 	Fetch(context.Context, *Self) (*AuctionData, error)
 	Heartbeat(context.Context, *Self) (*emptypb.Empty, error)
 	RegisterNode(context.Context, *Self) (*emptypb.Empty, error)
+	GetCluster(context.Context, *Self) (*ClusterInfo, error)
 	mustEmbedUnimplementedReplicationSyncServer()
 }
 
@@ -241,6 +254,9 @@ func (UnimplementedReplicationSyncServer) Heartbeat(context.Context, *Self) (*em
 }
 func (UnimplementedReplicationSyncServer) RegisterNode(context.Context, *Self) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterNode not implemented")
+}
+func (UnimplementedReplicationSyncServer) GetCluster(context.Context, *Self) (*ClusterInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCluster not implemented")
 }
 func (UnimplementedReplicationSyncServer) mustEmbedUnimplementedReplicationSyncServer() {}
 func (UnimplementedReplicationSyncServer) testEmbeddedByValue()                         {}
@@ -317,6 +333,24 @@ func _ReplicationSync_RegisterNode_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReplicationSync_GetCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Self)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReplicationSyncServer).GetCluster(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReplicationSync_GetCluster_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReplicationSyncServer).GetCluster(ctx, req.(*Self))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ReplicationSync_ServiceDesc is the grpc.ServiceDesc for ReplicationSync service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -335,6 +369,10 @@ var ReplicationSync_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterNode",
 			Handler:    _ReplicationSync_RegisterNode_Handler,
+		},
+		{
+			MethodName: "GetCluster",
+			Handler:    _ReplicationSync_GetCluster_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

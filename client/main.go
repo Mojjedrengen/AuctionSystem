@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"time"
@@ -12,14 +13,17 @@ import (
 )
 
 func main() {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	addr := flag.String("addr", "localhost:50051", "address of auction node")
+	flag.Parse()
+
+	conn, err := grpc.Dial(*addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("could not connect to %v", err)
 	}
 	defer conn.Close()
 
 	client := auctionsystem.NewAuctionClient(conn)
-	fmt.Println("client connected")
+	fmt.Println("client connected to", *addr)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

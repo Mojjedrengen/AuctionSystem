@@ -15,6 +15,7 @@ service ReplicationSync {
   rpc Fetch(self) returns (AuctionData) {}
   rpc Heartbeat(self) returns (google.protobuf.Empty) {}
   rpc RegisterNode(self) returns (google.protobuf.Empty) {}
+  rpc GetCluster(self) returns (ClusterInfo);
 }
 
 message amount {
@@ -27,6 +28,10 @@ message UUID { string value = 1; }
 message resultmsg {
   UUID highestbidder = 1;
   state state = 2;
+}
+
+message ClusterInfo {
+  map<uint64, string> members = 1;
 }
 
 enum state {
