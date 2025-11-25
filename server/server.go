@@ -19,31 +19,69 @@ import (
 type ReplicationServer struct {
 	auctionsystem.UnimplementedReplicationSyncServer
 
-	leaderAddr string
-	leaderConn *grpc.ClientConn
-	leader     auctionsystem.ReplicationSyncClient
-	self       *AuctionServer
-	selfAdress string
+	leaderAddr      string
+	leaderConn      *grpc.ClientConn
+	leader          auctionsystem.ReplicationSyncClient
+	self            *AuctionServer
+	selfAdress      string
+	leaderHeartbeat auctionsystem.ReplicationSyncClient
 }
 
 type AuctionServer struct {
 	auctionsystem.UnimplementedAuctionServer
 
-	isLeader      bool
-	leaderAddr    string
-	bidChan       chan auctionsystem.Ackmsg
-	leaderConn    *grpc.ClientConn
-	leader        auctionsystem.AuctionClient
-	id            uint64
-	highestBidder *auctionsystem.UUID
-	highestBid    uint64
-	knownBidders  []*auctionsystem.UUID
-	bidTimeframe  uint32
-	bidStartTime  uint64
-	mu            sync.Mutex
-	lastWonBidder *auctionsystem.UUID
-	isBitOngoin   bool
-	state         auctionsystem.State
+	isLeader        bool
+	leaderAddr      string
+	bidChan         chan auctionsystem.Ackmsg
+	leaderConn      *grpc.ClientConn
+	leader          auctionsystem.AuctionClient
+	id              uint64
+	highestBidder   *auctionsystem.UUID
+	highestBid      uint64
+	knownBidders    []*auctionsystem.UUID
+	bidTimeframe    uint32
+	bidStartTime    uint64
+	mu              sync.Mutex
+	lastWonBidder   *auctionsystem.UUID
+	isBitOngoin     bool
+	state           auctionsystem.State
+	leaderHeartbeat auctionsystem.ReplicationSyncClient
+}
+
+func (s *AuctionServer) promotoToLeader() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	fmt.Println("Node: ", s.id, " is now promoting itself to leader")
+
+	s.isLeader = true
+
+	if s.leaderConn != nil {
+		s.leaderConn.Close()
+		s.leaderConn = nil
+	}
+
+	s.leader = nil
+}
+
+func (s *AuctionServer) LeaderMonitor() {
+	if s.isLeader {
+		return
+	}
+
+	for {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		_, err := s.leaderHeartbeat.Heartbeat(ctx, &auctionsystem.Self{Id: s.id})
+		cancel()
+
+		if err != nil {
+			fmt.Println("heartbeat fail, leader might be dead", err)
+			s.promotoToLeader()
+			return
+		}
+
+		time.Sleep(1 * time.Second)
+	}
 }
 
 func (s *ReplicationServer) GetLeader() auctionsystem.ReplicationSyncClient {
@@ -64,6 +102,7 @@ func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderA
 		}
 		s.leaderConn = conn
 		s.leader = auctionsystem.NewReplicationSyncClient(conn)
+		s.leaderHeartbeat = auctionsystem.NewReplicationSyncClient(conn)
 	}
 	s.selfAdress = fmt.Sprintf("localhost:%d", port)
 	lis, err := net.Listen("tcp", s.selfAdress)
@@ -94,6 +133,7 @@ func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr 
 		state:         auctionsystem.State_ONGOING,
 	}
 	if !isLeader {
+
 		var opts []grpc.DialOption
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		conn, err := grpc.NewClient(leaderAddr, opts...)
@@ -102,8 +142,11 @@ func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr 
 		}
 		s.leaderConn = conn
 		s.leader = auctionsystem.NewAuctionClient(conn)
+		s.leaderHeartbeat = auctionsystem.NewReplicationSyncClient(conn)
 	}
+	go s.LeaderMonitor()
 	return s
+
 }
 
 func (s *AuctionServer) knownBiddersInsert(UUID *auctionsystem.UUID) {
