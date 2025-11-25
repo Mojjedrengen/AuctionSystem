@@ -14,6 +14,7 @@ service Auction {
 service ReplicationSync {
   rpc Fetch(self) returns (AuctionData) {}
   rpc Heartbeat(self) returns (google.protobuf.Empty) {}
+  rpc RegisterNode(self) returns (google.protobuf.Empty) {}
 }
 
 message amount {

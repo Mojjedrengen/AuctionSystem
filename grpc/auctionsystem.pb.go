@@ -510,10 +510,11 @@ const file_grpc_auctionsystem_proto_rawDesc = "" +
 	"\tEXCEPTION\x10\x022~\n" +
 	"\aAuction\x125\n" +
 	"\x03Bid\x12\x15.auctionsystem.amount\x1a\x15.auctionsystem.ackmsg\"\x00\x12<\n" +
-	"\x06Result\x12\x16.google.protobuf.Empty\x1a\x18.auctionsystem.resultmsg\"\x002\x89\x01\n" +
+	"\x06Result\x12\x16.google.protobuf.Empty\x1a\x18.auctionsystem.resultmsg\"\x002\xc8\x01\n" +
 	"\x0fReplicationSync\x12:\n" +
 	"\x05Fetch\x12\x13.auctionsystem.self\x1a\x1a.auctionsystem.AuctionData\"\x00\x12:\n" +
-	"\tHeartbeat\x12\x13.auctionsystem.self\x1a\x16.google.protobuf.Empty\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
+	"\tHeartbeat\x12\x13.auctionsystem.self\x1a\x16.google.protobuf.Empty\"\x00\x12=\n" +
+	"\fRegisterNode\x12\x13.auctionsystem.self\x1a\x16.google.protobuf.Empty\"\x00B:Z8github.com/Mojjedrengen/AuctionSystem/grpc/auctionsystemb\x06proto3"
 
 var (
 	file_grpc_auctionsystem_proto_rawDescOnce sync.Once
@@ -553,12 +554,14 @@ var file_grpc_auctionsystem_proto_depIdxs = []int32{
 	8,  // 9: auctionsystem.Auction.Result:input_type -> google.protobuf.Empty
 	6,  // 10: auctionsystem.ReplicationSync.Fetch:input_type -> auctionsystem.self
 	6,  // 11: auctionsystem.ReplicationSync.Heartbeat:input_type -> auctionsystem.self
-	5,  // 12: auctionsystem.Auction.Bid:output_type -> auctionsystem.ackmsg
-	4,  // 13: auctionsystem.Auction.Result:output_type -> auctionsystem.resultmsg
-	7,  // 14: auctionsystem.ReplicationSync.Fetch:output_type -> auctionsystem.AuctionData
-	8,  // 15: auctionsystem.ReplicationSync.Heartbeat:output_type -> google.protobuf.Empty
-	12, // [12:16] is the sub-list for method output_type
-	8,  // [8:12] is the sub-list for method input_type
+	6,  // 12: auctionsystem.ReplicationSync.RegisterNode:input_type -> auctionsystem.self
+	5,  // 13: auctionsystem.Auction.Bid:output_type -> auctionsystem.ackmsg
+	4,  // 14: auctionsystem.Auction.Result:output_type -> auctionsystem.resultmsg
+	7,  // 15: auctionsystem.ReplicationSync.Fetch:output_type -> auctionsystem.AuctionData
+	8,  // 16: auctionsystem.ReplicationSync.Heartbeat:output_type -> google.protobuf.Empty
+	8,  // 17: auctionsystem.ReplicationSync.RegisterNode:output_type -> google.protobuf.Empty
+	13, // [13:18] is the sub-list for method output_type
+	8,  // [8:13] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
