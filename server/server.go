@@ -46,6 +46,10 @@ type AuctionServer struct {
 	state         auctionsystem.State
 }
 
+func (s *ReplicationServer) GetLeader() auctionsystem.ReplicationSyncClient {
+	return s.leader
+}
+
 func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, port uint16) (*ReplicationServer, *AuctionServer) {
 	s := &ReplicationServer{}
 	s.self = NewAuctionServer(id, bidTimeframe, isLeader, leaderAddr)

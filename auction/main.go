@@ -58,11 +58,18 @@ func main() {
 		log.Fatalf("failted to listen: %v", err)
 	}
 	fmt.Printf("Auction server running on port %d\n", port)
-
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failted to server %v", err)
-	}
-
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failted to server %v", err)
+		}
+	}()
 	time.Sleep(10 * time.Second)
-	fmt.Println(repServer.Fetch(context.Background(), &auctionsystem.Self{}))
+	if !isLeader {
+		fmt.Println(repServer.GetLeader().Fetch(context.Background(), &auctionsystem.Self{}))
+	} else {
+		fmt.Println("is leader")
+	}
+	for {
+	}
+	//fmt.Println(repServer.Fetch(context.Background(), &auctionsystem.Self{}))
 }
