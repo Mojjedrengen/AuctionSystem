@@ -3,11 +3,14 @@ package server
 import (
 	"context"
 	"errors"
+	"log"
 	"sort"
 	"sync"
 	"time"
 
 	auctionsystem "github.com/Mojjedrengen/AuctionSystem/grpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -15,6 +18,10 @@ type AuctionServer struct {
 	auctionsystem.UnimplementedAuctionServer
 
 	isLeader      bool
+	leaderAddr    string
+	bidChan       chan auctionsystem.Ackmsg
+	leaderConn    *grpc.ClientConn
+	leader        auctionsystem.AuctionClient
 	id            uint64
 	highestBidder *auctionsystem.UUID
 	highestBid    uint64
@@ -27,9 +34,11 @@ type AuctionServer struct {
 	state         auctionsystem.State
 }
 
-func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool) *AuctionServer {
-	return &AuctionServer{
+func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string) *AuctionServer {
+	s := &AuctionServer{
 		isLeader:      isLeader,
+		leaderAddr:    leaderAddr,
+		bidChan:       make(chan auctionsystem.Ackmsg),
 		id:            id,
 		highestBidder: nil,
 		highestBid:    0,
@@ -40,6 +49,17 @@ func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool) *AuctionSer
 		isBitOngoin:   true,
 		state:         auctionsystem.State_ONGOING,
 	}
+	if !isLeader {
+		var opts []grpc.DialOption
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(leaderAddr, opts...)
+		if err != nil {
+			log.Fatalf("Failed to connect to leader during startup: %v", err)
+		}
+		s.leaderConn = conn
+		s.leader = auctionsystem.NewAuctionClient(conn)
+	}
+	return s
 }
 
 func (s *AuctionServer) knownBiddersInsert(UUID *auctionsystem.UUID) {
@@ -76,6 +96,17 @@ func (s *AuctionServer) knownBiddersInsertContains(UUID *auctionsystem.UUID) {
 }
 
 func (s *AuctionServer) Bid(ctx context.Context, amount *auctionsystem.Amount) (*auctionsystem.Ackmsg, error) {
+	if !s.isLeader {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		bidResponse, err := s.leader.Bid(ctx, amount)
+		if err != nil {
+			// TODO: probs add election start here
+			log.Printf("leader conn err on bid: %v", err)
+			return nil, errors.New("Failed to connect to leader")
+		}
+		return bidResponse, nil
+	}
 	s.knownBiddersInsertContains(amount.Id)
 	var ack auctionsystem.Ackmsg
 	s.mu.Lock()
@@ -134,4 +165,9 @@ func (s *AuctionServer) BidManager() {
 		}
 		s.mu.Unlock()
 	}
+}
+
+func ServerManager(s *AuctionServer, grpc grpc.ServiceRegistrar) {
+	go s.BidManager()
+
 }
