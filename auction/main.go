@@ -44,6 +44,7 @@ func main() {
 		isLeader,
 		leaderAdress,
 		leaderAdressRep,
+		fmt.Sprintf("localhost:%d", port),
 		portRep,
 	)
 

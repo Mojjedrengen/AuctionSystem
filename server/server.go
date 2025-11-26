@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
 	"net"
 	"sort"
 	"sync"
@@ -41,17 +42,11 @@ func (s *ReplicationServer) RegisterNode(ctx context.Context, req *auctionsystem
 }
 
 func (s *ReplicationServer) GetCluster(ctx context.Context, req *auctionsystem.Self) (*auctionsystem.ClusterInfo, error) {
-	if !s.self.isLeader {
-		return nil, errors.New("not leader")
-	}
-
 	result := &auctionsystem.ClusterInfo{
 		Members: make(map[uint64]string),
 	}
 
-	for id, addr := range s.cluster {
-		result.Members[id] = addr
-	}
+	maps.Copy(result.Members, s.cluster)
 	result.Members[s.self.id] = s.selfAdress
 
 	return result, nil
@@ -60,6 +55,7 @@ func (s *ReplicationServer) GetCluster(ctx context.Context, req *auctionsystem.S
 type AuctionServer struct {
 	auctionsystem.UnimplementedAuctionServer
 
+	selfAddress            string
 	isLeader               bool
 	leaderAddr             string
 	bidChan                chan auctionsystem.Ackmsg
@@ -75,7 +71,6 @@ type AuctionServer struct {
 	lastWonBidder          *auctionsystem.UUID
 	isBitOngoin            bool
 	state                  auctionsystem.State
-	leaderHeartbeat        auctionsystem.ReplicationSyncClient
 	selfReplicationAddress string
 }
 
@@ -93,6 +88,14 @@ func (s *AuctionServer) ApplySnapshot(data *auctionsystem.AuctionData) {
 	s.state = data.State
 }
 
+func (s *ReplicationServer) UpdateCluser(cluser *auctionsystem.ClusterInfo) {
+	for id, address := range cluser.GetMembers() {
+		if _, ok := s.cluster[id]; !ok {
+			s.cluster[id] = address
+		}
+	}
+}
+
 func (s *AuctionServer) promotoToLeader() {
 
 	fmt.Println("Node: ", s.id, " is now promoting itself to leader")
@@ -107,33 +110,138 @@ func (s *AuctionServer) promotoToLeader() {
 	s.leader = nil
 }
 
-func (s *AuctionServer) LeaderMonitor() {
-	if s.isLeader {
+func (s *ReplicationServer) promotoToLeader() {
+	for id, addr := range s.cluster {
+		var opts []grpc.DialOption
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(addr, opts...)
+		if err != nil {
+			log.Printf("Failed to attempt to accent with %v during connection: %v", id, err)
+		}
+		client := auctionsystem.NewReplicationSyncClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		ack, err := client.AccensionAttempt(ctx, &auctionsystem.ExtendedSelf{RepSelf: &auctionsystem.Self{
+			Address: s.selfAdress,
+			Id:      s.self.id,
+		}, AuctionAddress: s.self.selfAddress})
+		if err == nil {
+			if ack.Ack != auctionsystem.Ack_SUCCESS {
+				conn.Close()
+				cancel()
+				return
+			}
+		}
+		conn.Close()
+		cancel()
+	}
+	s.self.isLeader = true
+	// is now leader
+	s.leaderAddr = s.selfAdress
+	s.leaderConn.Close()
+	s.leaderConn = nil
+	s.leader = nil
+	s.leaderHeartbeat = nil
+	s.self.promotoToLeader()
+}
+func (s *ReplicationServer) AccensionAttempt(ctx context.Context, them *auctionsystem.ExtendedSelf) (*auctionsystem.Ackmsg, error) {
+	highest := s.self.id
+
+	for otherID := range s.cluster {
+		if otherID > highest {
+			highest = otherID
+		}
+	}
+	if them.RepSelf.Id > highest {
+		if _, exist := s.cluster[them.RepSelf.Id]; !exist {
+			s.cluster[them.RepSelf.Id] = them.RepSelf.Address
+		}
+		s.leaderAddr = them.RepSelf.Address
+		var opts []grpc.DialOption
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(them.RepSelf.Address, opts...)
+		if err != nil {
+			log.Printf("Failed to connect to leader during startup: %v", err)
+		}
+		s.leaderConn = conn
+		s.leader = auctionsystem.NewReplicationSyncClient(conn)
+		s.leaderHeartbeat = auctionsystem.NewReplicationSyncClient(conn)
+
+		s.self.isLeader = false
+
+		s.self.selfAddress = them.AuctionAddress
+		conn2, err2 := grpc.NewClient(them.AuctionAddress, opts...)
+		if err2 != nil {
+			log.Printf("Failed to connect to leader during startup: %v", err)
+		}
+		s.self.leaderConn.Close()
+		s.self.leaderConn = conn2
+		s.self.leader = auctionsystem.NewAuctionClient(conn2)
+
+		log.Printf("%d is now leader", them.RepSelf.Id)
+
+		return &auctionsystem.Ackmsg{Ack: auctionsystem.Ack_SUCCESS}, nil
+	} else {
+		return &auctionsystem.Ackmsg{Ack: auctionsystem.Ack_FAIL}, nil
+	}
+}
+
+func (s *ReplicationServer) LeaderMonitor() {
+	if s.self.isLeader {
 		return
 	}
 
 	for {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		_, err := s.leaderHeartbeat.Heartbeat(ctx, &auctionsystem.Self{Id: s.id})
+		_, err := s.leaderHeartbeat.Heartbeat(ctx, &auctionsystem.Self{Id: s.self.id})
 		cancel()
 
 		if err != nil {
 			fmt.Println("heartbeat fail, leader might be dead", err)
-			cluster, err2 := s.leaderHeartbeat.GetCluster(context.Background(), &auctionsystem.Self{Id: s.id})
-			if err2 != nil {
-				fmt.Println("could not get cluster", err2)
-				s.promotoToLeader()
-				return
+			//	cluster, err2 := s.leaderHeartbeat.GetCluster(context.Background(), &auctionsystem.Self{Id: s.self.id})
+			//	if err2 != nil {
+			//		fmt.Println("could not get cluster", err2)
+			//		s.self.promotoToLeader()
+			//		return
+			//	}
+
+			var leaderid uint64
+			for id, addr := range s.cluster {
+				if addr == s.leaderAddr {
+					leaderid = id
+					continue
+				}
+				if addr == s.selfAdress {
+					continue
+				}
+				log.Printf("Attempting negotiation with %d on %v", id, addr)
+				var opts []grpc.DialOption
+				opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				conn, err := grpc.NewClient(addr, opts...)
+				if err != nil {
+					log.Printf("Failed to sync cluster with %d during connection: %v", id, err)
+				}
+				client := auctionsystem.NewReplicationSyncClient(conn)
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+				cluser, err := client.GetCluster(ctx, &auctionsystem.Self{Id: s.self.id})
+				if err != nil {
+					log.Printf("Failed to sync cluster with %d during getCluster: %v", id, err)
+				}
+				s.UpdateCluser(cluser)
+				conn.Close()
+				cancel()
 			}
 
-			highest := s.id
-			for otherID := range cluster.Members {
+			delete(s.cluster, leaderid)
+
+			highest := s.self.id
+
+			for otherID := range s.cluster {
 				if otherID > highest {
 					highest = otherID
 				}
 			}
 
-			if highest == s.id {
+			if highest == s.self.id {
 				fmt.Println("Promoting self to leader")
 				s.promotoToLeader()
 			} else {
@@ -142,9 +250,13 @@ func (s *AuctionServer) LeaderMonitor() {
 			return
 		}
 
-		data, err2 := s.leaderHeartbeat.Fetch(context.Background(), &auctionsystem.Self{Id: s.id})
+		data, err2 := s.leaderHeartbeat.Fetch(context.Background(), &auctionsystem.Self{Id: s.self.id})
 		if err2 == nil {
-			s.ApplySnapshot(data)
+			s.self.ApplySnapshot(data)
+		}
+		cluster, err3 := s.leaderHeartbeat.GetCluster(context.Background(), &auctionsystem.Self{Id: s.self.id})
+		if err3 == nil {
+			s.UpdateCluser(cluster)
 		}
 
 		time.Sleep(1 * time.Second)
@@ -155,14 +267,14 @@ func (s *ReplicationServer) GetLeader() auctionsystem.ReplicationSyncClient {
 	return s.leader
 }
 
-func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, port uint16) (*ReplicationServer, *AuctionServer) {
+func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, AuctionAddress string, port uint16) (*ReplicationServer, *AuctionServer) {
 	s := &ReplicationServer{}
 	s.cluster = make(map[uint64]string)
 
 	selfAddr := fmt.Sprintf("localhost:%d", port)
 	s.selfAdress = selfAddr
 
-	s.self = NewAuctionServer(id, bidTimeframe, isLeader, leaderAddr, leaderAddrReplication, selfAddr)
+	s.self = NewAuctionServer(id, bidTimeframe, isLeader, leaderAddr, leaderAddrReplication, selfAddr, AuctionAddress)
 
 	if !isLeader {
 
@@ -175,6 +287,18 @@ func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderA
 		s.leaderConn = conn
 		s.leader = auctionsystem.NewReplicationSyncClient(conn)
 		s.leaderHeartbeat = auctionsystem.NewReplicationSyncClient(conn)
+		s.leaderAddr = leaderAddrReplication
+
+		_, err = s.leaderHeartbeat.RegisterNode(
+			context.Background(),
+			&auctionsystem.Self{
+				Address: s.self.selfReplicationAddress,
+				Id:      s.self.id,
+			},
+		)
+		if err != nil {
+			log.Println("error registering node with leader: ", err)
+		}
 	}
 	s.selfAdress = fmt.Sprintf("localhost:%d", port)
 	lis, err := net.Listen("tcp", s.selfAdress)
@@ -186,13 +310,15 @@ func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderA
 	grpcServer := grpc.NewServer(opts...)
 	auctionsystem.RegisterReplicationSyncServer(grpcServer, s)
 	go grpcServer.Serve(lis)
+	go s.LeaderMonitor()
 	return s, s.self
 }
 
-func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, selfReplicationAddress string) *AuctionServer {
+func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr string, leaderAddrReplication string, selfReplicationAddress string, selfAddress string) *AuctionServer {
 	s := &AuctionServer{
 		isLeader:               isLeader,
 		leaderAddr:             leaderAddr,
+		selfAddress:            selfAddress,
 		bidChan:                make(chan auctionsystem.Ackmsg),
 		id:                     id,
 		highestBidder:          nil,
@@ -215,22 +341,8 @@ func NewAuctionServer(id uint64, bidTimeframe uint32, isLeader bool, leaderAddr 
 		}
 		s.leaderConn = conn
 		s.leader = auctionsystem.NewAuctionClient(conn)
-		s.leaderHeartbeat = auctionsystem.NewReplicationSyncClient(conn)
-
-		_, err = s.leaderHeartbeat.RegisterNode(
-			context.Background(),
-			&auctionsystem.Self{
-				Address: s.selfReplicationAddress,
-				Id:      s.id,
-			},
-		)
-		if err != nil {
-			log.Println("error registering node with leader: ", err)
-		}
 	}
-	go s.LeaderMonitor()
 	return s
-
 }
 
 func (s *AuctionServer) knownBiddersInsert(UUID *auctionsystem.UUID) {
