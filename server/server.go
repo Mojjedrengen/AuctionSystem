@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
 	"net"
 	"sort"
 	"sync"
@@ -41,17 +42,11 @@ func (s *ReplicationServer) RegisterNode(ctx context.Context, req *auctionsystem
 }
 
 func (s *ReplicationServer) GetCluster(ctx context.Context, req *auctionsystem.Self) (*auctionsystem.ClusterInfo, error) {
-	//	if !s.self.isLeader {
-	//		return nil, errors.New("not leader")
-	//	}
-
 	result := &auctionsystem.ClusterInfo{
 		Members: make(map[uint64]string),
 	}
 
-	for id, addr := range s.cluster {
-		result.Members[id] = addr
-	}
+	maps.Copy(result.Members, s.cluster)
 	result.Members[s.self.id] = s.selfAdress
 
 	return result, nil
@@ -77,7 +72,6 @@ type AuctionServer struct {
 	isBitOngoin            bool
 	state                  auctionsystem.State
 	selfReplicationAddress string
-	//leaderHeartbeat        auctionsystem.ReplicationSyncClient
 }
 
 func (s *AuctionServer) ApplySnapshot(data *auctionsystem.AuctionData) {
@@ -140,7 +134,7 @@ func (s *ReplicationServer) promotoToLeader() {
 		conn.Close()
 		cancel()
 	}
-
+	s.self.isLeader = true
 	// is now leader
 	s.leaderAddr = s.selfAdress
 	s.leaderConn.Close()
@@ -183,6 +177,8 @@ func (s *ReplicationServer) AccensionAttempt(ctx context.Context, them *auctions
 		s.self.leaderConn = conn2
 		s.self.leader = auctionsystem.NewAuctionClient(conn2)
 
+		log.Printf("%d is now leader", them.RepSelf.Id)
+
 		return &auctionsystem.Ackmsg{Ack: auctionsystem.Ack_SUCCESS}, nil
 	} else {
 		return &auctionsystem.Ackmsg{Ack: auctionsystem.Ack_FAIL}, nil
@@ -208,7 +204,16 @@ func (s *ReplicationServer) LeaderMonitor() {
 			//		return
 			//	}
 
+			var leaderid uint64
 			for id, addr := range s.cluster {
+				if addr == s.leaderAddr {
+					leaderid = id
+					continue
+				}
+				if addr == s.selfAdress {
+					continue
+				}
+				log.Printf("Attempting negotiation with %d on %v", id, addr)
 				var opts []grpc.DialOption
 				opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				conn, err := grpc.NewClient(addr, opts...)
@@ -225,6 +230,8 @@ func (s *ReplicationServer) LeaderMonitor() {
 				conn.Close()
 				cancel()
 			}
+
+			delete(s.cluster, leaderid)
 
 			highest := s.self.id
 
@@ -280,6 +287,7 @@ func NewReplicationServer(id uint64, bidTimeframe uint32, isLeader bool, leaderA
 		s.leaderConn = conn
 		s.leader = auctionsystem.NewReplicationSyncClient(conn)
 		s.leaderHeartbeat = auctionsystem.NewReplicationSyncClient(conn)
+		s.leaderAddr = leaderAddrReplication
 
 		_, err = s.leaderHeartbeat.RegisterNode(
 			context.Background(),
