@@ -16,6 +16,7 @@ service ReplicationSync {
   rpc Heartbeat(self) returns (google.protobuf.Empty) {}
   rpc RegisterNode(self) returns (google.protobuf.Empty) {}
   rpc GetCluster(self) returns (ClusterInfo);
+  rpc AccensionAttempt(ExtendedSelf) returns (ackmsg);
 }
 
 message amount {
@@ -30,9 +31,7 @@ message resultmsg {
   state state = 2;
 }
 
-message ClusterInfo {
-  map<uint64, string> members = 1;
-}
+message ClusterInfo { map<uint64, string> members = 1; }
 
 enum state {
   ONGOING = 0;
@@ -48,6 +47,11 @@ enum ack {
   FAIL = 0;
   SUCCESS = 1;
   EXCEPTION = 2;
+}
+
+message ExtendedSelf {
+  self RepSelf = 1;
+  string AuctionAddress = 2;
 }
 
 message self {
